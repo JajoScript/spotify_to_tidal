@@ -3,8 +3,18 @@
 import sys
 import spotipy
 import tidalapi
+import os
+from dotenv import load_dotenv
 import webbrowser
 import yaml
+
+# Variables de entorno.
+config = load_dotenv(".env");
+my_session_id:str = os.environ['SESSION_ID'];
+my_token_type:str = os.environ['TOKEN_TYPE'];
+my_access_token:str = os.environ['ACCESS_TOKEN'];
+my_refresh_token:str = os.environ['REFRESH_TOKEN'];
+my_playlist_uri:str = os.environ['PLAYLIST_URI'];
 
 def open_spotify_session(config):
     credentials_manager = spotipy.SpotifyOAuth(username=config['username'],
@@ -27,23 +37,8 @@ def open_tidal_session():
         previous_session = None
 
     session = tidalapi.Session()
-    if previous_session:
-        try:
-            if session.load_oauth_session(previous_session['session_id'],
-                                   previous_session['token_type'],
-                                   previous_session['access_token'],
-                                   previous_session['refresh_token'] ):
-                return session
-        except Exception as e:
-            print("Error loading previous Tidal Session: \n" + str(e) )
+    session.load_oauth_session(session_id=my_session_id, token_type=my_token_type, access_token=my_access_token, refresh_token=my_refresh_token);
 
-    login, future = session.login_oauth()
-    print('Login with the webbrowser: ' + login.verification_uri_complete)
-    url = login.verification_uri_complete
-    if not url.startswith('https://'):
-        url = 'https://' + url
-    webbrowser.open(url)
-    future.result()
     with open('.session.yml', 'w') as f:
         yaml.dump( {'session_id': session.session_id,
                    'token_type': session.token_type,
